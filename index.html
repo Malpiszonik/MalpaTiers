@@ -2,181 +2,163 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>MCTIERS GLOBAL</title>
+    <title>MCTIERS GLOBAL | RANKING</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        :root { --bg: #0b0b0b; --card-bg: #161616; --accent: #ffaa00; --ht-color: #ff4444; --lt-color: #44ff44; --gray: #888; }
-        body { background-color: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
-        #admin-section { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--accent); margin-bottom: 30px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; outline: none; width: 90%; }
-        .btn-save { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 12px; cursor: pointer; border-radius: 6px; width: 100%; text-transform: uppercase; }
-        .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
-        .filter-btn { background: #222; color: #fff; border: 1px solid #333; padding: 8px 18px; cursor: pointer; border-radius: 20px; transition: 0.3s; font-size: 12px; font-weight: bold; }
-        .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-        .table-container { background: var(--card-bg); border-radius: 12px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th { background: #1f1f1f; color: var(--gray); padding: 15px; font-size: 11px; text-transform: uppercase; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #1f1f1f; }
+        :root { --bg: #0b0b0b; --card: #161616; --accent: #ffaa00; --ht: #ff4444; --lt: #44ff44; --gray: #888; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        /* Panel Admina */
+        #admin-panel { display: none; background: #1a1a1a; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+        input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; outline: none; font-size: 13px; }
+        input:focus { border-color: var(--accent); }
+        .btn-push { background: var(--accent); color: #000; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 6px; grid-column: span 2; }
+        
+        /* Tabela */
+        .table-wrap { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #1f1f1f; color: var(--gray); padding: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 14px; border-bottom: 1px solid #1f1f1f; font-size: 14px; }
         tr:hover { background: #1d1d1d; }
-        .tier { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 11px; min-width: 30px; }
-        .ht { color: var(--ht-color); border: 1px solid var(--ht-color); background: rgba(255,68,68,0.1); }
-        .lt { color: var(--lt-color); border: 1px solid var(--lt-color); background: rgba(68,255,68,0.1); }
-        .na { color: #444; border: 1px solid #222; }
+        
+        /* Tiers */
+        .t-badge { padding: 4px 8px; border-radius: 4px; font-weight: 900; font-size: 11px; border: 1px solid transparent; }
+        .ht-b { color: var(--ht); border-color: var(--ht); background: rgba(255,68,68,0.1); }
+        .lt-b { color: var(--lt); border-color: var(--lt); background: rgba(68,255,68,0.1); }
+        .na-b { color: #444; border-color: #222; }
+        
+        /* Akcje Admina */
+        .act-btn { background: #333; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin: 0 2px; font-size: 12px; }
+        .act-btn:hover { background: #444; }
+        .del { color: #ff4444; }
         .admin-only { display: none; }
-        .action-btn { background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin: 0 2px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>MCTIERS GLOBAL</h1>
-        <p style="color: var(--gray)">Competitive PvP Leaderboard</p>
-    </div>
+    <header style="text-align:center; margin-bottom:40px;">
+        <h1 style="color:var(--accent); margin:0; letter-spacing:3px;">MCTIERS GLOBAL</h1>
+        <p style="color:var(--gray); font-size:12px;">Official Player Leaderboard</p>
+    </header>
 
-    <div id="admin-section">
-        <h3 id="form-title" style="margin:0 0 15px 0">Admin Panel Active</h3>
-        <input type="hidden" id="edit-key">
-        <div class="form-grid">
-            <input type="text" id="p-name" placeholder="Nick">
-            <input type="text" id="p-sword" placeholder="Sword">
-            <input type="text" id="p-uhc" placeholder="UHC">
-            <input type="text" id="p-axe" placeholder="Axe">
-            <input type="text" id="p-crystal" placeholder="Crystal">
-            <input type="text" id="p-mace" placeholder="Mace">
-            <input type="text" id="p-nethpot" placeholder="Nethpot">
-            <input type="text" id="p-smp" placeholder="SMP">
+    <div id="admin-panel">
+        <h2 style="margin:0 0 15px 0; font-size:16px; color:var(--accent)">MANAGE DATABASE</h2>
+        <input type="hidden" id="entry-id">
+        <div class="admin-grid">
+            <input type="text" id="in-name" placeholder="Player Name">
+            <input type="text" id="in-sword" placeholder="Sword">
+            <input type="text" id="in-uhc" placeholder="UHC">
+            <input type="text" id="in-axe" placeholder="Axe">
+            <input type="text" id="in-crys" placeholder="Crystal">
+            <input type="text" id="in-mace" placeholder="Mace">
+            <input type="text" id="in-neth" placeholder="Nethpot">
+            <input type="text" id="in-smp" placeholder="SMP">
+            <button class="btn-push" onclick="pushData()">UPDATE DATABASE</button>
         </div>
-        <button class="btn-save" onclick="saveToCloud()">Save Changes</button>
     </div>
 
-    <div class="filter-bar">
-        <button class="filter-btn active" onclick="setMode('all')">OVERALL</button>
-        <button class="filter-btn" onclick="setMode('sword')">SWORD</button>
-        <button class="filter-btn" onclick="setMode('crystal')">CRYSTAL</button>
-        <button class="filter-btn" onclick="setMode('mace')">MACE</button>
-    </div>
-
-    <div class="table-container">
+    <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>#</th><th>Player</th><th>Points</th><th>Sword</th><th>UHC</th><th>Axe</th><th>Crystal</th><th>Mace</th><th>Nethpot</th><th>SMP</th><th class="admin-only">Actions</th>
+                    <th>#</th><th>Player</th><th>PTS</th><th>Sword</th><th>UHC</th><th>Axe</th><th>Crystal</th><th>Mace</th><th>Nethpot</th><th>SMP</th><th class="admin-only">Control</th>
                 </tr>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="main-table"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
+    const config = {
         apiKey: "AIzaSyAiWnRyj3Vlrcx-KZuy-6VHyjy9oSku80Q",
         authDomain: "pvp-tiers-ea649.firebaseapp.com",
         databaseURL: "https://pvp-tiers-ea649-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "pvp-tiers-ea649",
-        storageBucket: "pvp-tiers-ea649.firebasestorage.app",
-        messagingSenderId: "471301418532",
-        appId: "1:471301418532:web:a1dc6ef2e7c6369dc5f2b1"
+        projectId: "pvp-tiers-ea649"
     };
-    
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(config);
     const db = firebase.database();
 
-    const tierPoints = { 'HT1': 10, 'LT1': 9, 'HT2': 8, 'LT2': 7, 'HT3': 6, 'LT3': 5, 'HT4': 4, 'LT4': 3, 'HT5': 2, 'LT5': 1 };
-    let currentMode = 'all';
+    const points = { 'HT1':10,'LT1':9,'HT2':8,'LT2':7,'HT3':6,'LT3':5,'HT4':4,'LT4':3,'HT5':2,'LT5':1 };
     
-    // TWOJA TAJNA FRAZA DO LINKU:
-    const SECRET_KEY = "MalpizonAdmin"; 
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get('admin') === SECRET_KEY;
+    // TWOJA TAJNA WPISKA W LINKU
+    const secret = "Malpizon"; 
+    const isOwner = new URLSearchParams(window.location.search).get('admin') === secret;
 
-    if(isAdmin) {
-        document.getElementById('admin-section').style.display = 'block';
-    }
+    if(isOwner) document.getElementById('admin-panel').style.display = 'block';
 
-    db.ref('players').on('value', (s) => {
-        window.dataCache = s.val();
-        render();
-    });
-
-    function saveToCloud() {
-        if(!isAdmin) return;
-        const key = document.getElementById('edit-key').value;
-        const name = document.getElementById('p-name').value;
-        if(!name) return alert("Nick?");
-
-        const pData = {
-            name,
-            sword: document.getElementById('p-sword').value,
-            uhc: document.getElementById('p-uhc').value,
-            axe: document.getElementById('p-axe').value,
-            crystal: document.getElementById('p-crystal').value,
-            mace: document.getElementById('p-mace').value,
-            nethpot: document.getElementById('p-nethpot').value,
-            smp: document.getElementById('p-smp').value
-        };
-
-        key ? db.ref('players/' + key).update(pData) : db.ref('players').push(pData);
-        document.querySelectorAll('#admin-section input').forEach(i => i.value = '');
-        document.getElementById('edit-key').value = '';
-    }
-
-    function render() {
-        const tbody = document.getElementById('table-body');
+    db.ref('players').on('value', s => {
+        const data = s.val();
+        const tbody = document.getElementById('main-table');
         tbody.innerHTML = '';
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'table-cell' : 'none');
-
-        if(!window.dataCache) return;
-        let list = Object.keys(window.dataCache).map(k => ({ id: k, ...window.dataCache[k] }));
+        
+        if(!data) return;
+        let list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
 
         list.forEach(p => {
-            let sum = 0;
-            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => sum += tierPoints[(p[k]||'').toUpperCase()] || 0);
-            p.total = sum;
+            p.total = 0;
+            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => p.total += points[(p[k]||'').toUpperCase()] || 0);
         });
 
-        list.sort((a, b) => {
-            if (currentMode === 'all') return b.total - a.total;
-            return (tierPoints[(b[currentMode]||'').toUpperCase()] || 0) - (tierPoints[(a[currentMode]||'').toUpperCase()] || 0);
+        list.sort((a,b) => b.total - a.total).forEach((p, i) => {
+            const row = `<tr>
+                <td style="color:var(--gray)">${i+1}</td>
+                <td><strong>${p.name}</strong></td>
+                <td style="color:var(--accent); font-weight:bold">${p.total}</td>
+                ${['sword','uhc','axe','crystal','mace','nethpot','smp'].map(k => `<td>${fmt(p[k])}</td>`).join('')}
+                <td class="admin-only" style="display:${isOwner?'table-cell':'none'}">
+                    <button class="act-btn" onclick="edit('${p.id}')">EDIT</button>
+                    <button class="act-btn del" onclick="del('${p.id}')">DEL</button>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
         });
-
-        list.forEach((p, i) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${i+1}</td>
-                    <td><strong>${p.name}</strong></td>
-                    <td style="color:var(--accent)">${p.total}</td>
-                    ${['sword','uhc','axe','crystal','mace','nethpot','smp'].map(k => `<td>${fmt(p[k])}</td>`).join('')}
-                    <td class="admin-only" style="display:${isAdmin ? 'table-cell' : 'none'}">
-                        <button class="action-btn" onclick="editP('${p.id}')">✎</button>
-                        <button class="action-btn" onclick="delP('${p.id}')">×</button>
-                    </td>
-                </tr>`;
-        });
-    }
+    });
 
     function fmt(v) {
-        if (!v) return '<span class="tier na">N/A</span>';
-        let val = v.toUpperCase().trim();
-        return `<span class="tier ${val.includes('HT')?'ht':'lt'}">${val}</span>`;
+        if(!v) return '<span class="t-badge na-b">N/A</span>';
+        const val = v.toUpperCase().trim();
+        return `<span class="t-badge ${val.includes('HT')?'ht-b':'lt-b'}">${val}</span>`;
     }
 
-    function editP(id) {
-        const p = window.dataCache[id];
-        document.getElementById('edit-key').value = id;
-        document.getElementById('p-name').value = p.name;
-        ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => document.getElementById('p-'+k).value = p[k] || '');
-        window.scrollTo(0,0);
+    function pushData() {
+        if(!isOwner) return;
+        const id = document.getElementById('entry-id').value;
+        const payload = {
+            name: document.getElementById('in-name').value,
+            sword: document.getElementById('in-sword').value,
+            uhc: document.getElementById('in-uhc').value,
+            axe: document.getElementById('in-axe').value,
+            crystal: document.getElementById('in-crys').value,
+            mace: document.getElementById('in-mace').value,
+            nethpot: document.getElementById('in-neth').value,
+            smp: document.getElementById('in-smp').value
+        };
+        id ? db.ref('players/'+id).update(payload) : db.ref('players').push(payload);
+        document.querySelectorAll('#admin-panel input').forEach(i => i.value = '');
     }
 
-    function delP(id) { if(confirm("Del?")) db.ref('players/' + id).remove(); }
-    function setMode(m) { currentMode = m; render(); }
+    function edit(id) {
+        db.ref('players/'+id).once('value', s => {
+            const p = s.val();
+            document.getElementById('entry-id').value = id;
+            document.getElementById('in-name').value = p.name;
+            document.getElementById('in-sword').value = p.sword || '';
+            document.getElementById('in-uhc').value = p.uhc || '';
+            document.getElementById('in-axe').value = p.axe || '';
+            document.getElementById('in-crys').value = p.crystal || '';
+            document.getElementById('in-mace').value = p.mace || '';
+            document.getElementById('in-neth').value = p.nethpot || '';
+            document.getElementById('in-smp').value = p.smp || '';
+            window.scrollTo(0,0);
+        });
+    }
+
+    function del(id) { if(confirm("Usuń gracza?")) db.ref('players/'+id).remove(); }
 </script>
 </body>
 </html>
