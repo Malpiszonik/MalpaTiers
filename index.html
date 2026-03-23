@@ -8,71 +8,33 @@
     <style>
         :root { --bg: #0b0b0b; --card: #161616; --accent: #ffaa00; --ht: #ff4444; --lt: #44ff44; --gray: #888; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        
-        /* Panel Admina */
-        #admin-panel { display: none; background: #1a1a1a; border: 2px solid var(--accent); padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-        input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; outline: none; font-size: 13px; }
-        input:focus { border-color: var(--accent); }
-        .btn-push { background: var(--accent); color: #000; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 6px; grid-column: span 2; }
-        
-        /* Tabela */
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; }
         .table-wrap { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
         table { width: 100%; border-collapse: collapse; text-align: center; }
-        th { background: #1f1f1f; color: var(--gray); padding: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        th { background: #1f1f1f; color: var(--gray); padding: 15px; font-size: 11px; text-transform: uppercase; }
         td { padding: 14px; border-bottom: 1px solid #1f1f1f; font-size: 14px; }
-        tr:hover { background: #1d1d1d; }
-        
-        /* Tiers */
         .t-badge { padding: 4px 8px; border-radius: 4px; font-weight: 900; font-size: 11px; border: 1px solid transparent; }
         .ht-b { color: var(--ht); border-color: var(--ht); background: rgba(255,68,68,0.1); }
         .lt-b { color: var(--lt); border-color: var(--lt); background: rgba(68,255,68,0.1); }
         .na-b { color: #444; border-color: #222; }
-        
-        /* Akcje Admina */
-        .act-btn { background: #333; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin: 0 2px; font-size: 12px; }
-        .act-btn:hover { background: #444; }
-        .del { color: #ff4444; }
-        .admin-only { display: none; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <header style="text-align:center; margin-bottom:40px;">
-        <h1 style="color:var(--accent); margin:0; letter-spacing:3px;">MCTIERS GLOBAL</h1>
-        <p style="color:var(--gray); font-size:12px;">Official Player Leaderboard</p>
-    </header>
-
-    <div id="admin-panel">
-        <h2 style="margin:0 0 15px 0; font-size:16px; color:var(--accent)">MANAGE DATABASE</h2>
-        <input type="hidden" id="entry-id">
-        <div class="admin-grid">
-            <input type="text" id="in-name" placeholder="Player Name">
-            <input type="text" id="in-sword" placeholder="Sword">
-            <input type="text" id="in-uhc" placeholder="UHC">
-            <input type="text" id="in-axe" placeholder="Axe">
-            <input type="text" id="in-crys" placeholder="Crystal">
-            <input type="text" id="in-mace" placeholder="Mace">
-            <input type="text" id="in-neth" placeholder="Nethpot">
-            <input type="text" id="in-smp" placeholder="SMP">
-            <button class="btn-push" onclick="pushData()">UPDATE DATABASE</button>
+    <div class="container">
+        <div class="header">
+            <h1 style="color:var(--accent); letter-spacing:3px;">MCTIERS GLOBAL</h1>
+            <p style="color:var(--gray); font-size:12px;">Public Leaderboard</p>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Player</th><th>PTS</th><th>Sword</th><th>UHC</th><th>Axe</th><th>Crystal</th><th>Mace</th><th>Nethpot</th><th>SMP</th></tr>
+                </thead>
+                <tbody id="main-table"></tbody>
+            </table>
         </div>
     </div>
-
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th><th>Player</th><th>PTS</th><th>Sword</th><th>UHC</th><th>Axe</th><th>Crystal</th><th>Mace</th><th>Nethpot</th><th>SMP</th><th class="admin-only">Control</th>
-                </tr>
-            </thead>
-            <tbody id="main-table"></tbody>
-        </table>
-    </div>
-</div>
-
 <script>
     const config = {
         apiKey: "AIzaSyAiWnRyj3Vlrcx-KZuy-6VHyjy9oSku80Q",
@@ -82,83 +44,31 @@
     };
     firebase.initializeApp(config);
     const db = firebase.database();
-
     const points = { 'HT1':10,'LT1':9,'HT2':8,'LT2':7,'HT3':6,'LT3':5,'HT4':4,'LT4':3,'HT5':2,'LT5':1 };
-    
-    // TWOJA TAJNA WPISKA W LINKU
-    const secret = "Malpizon"; 
-    const isOwner = new URLSearchParams(window.location.search).get('admin') === secret;
-
-    if(isOwner) document.getElementById('admin-panel').style.display = 'block';
 
     db.ref('players').on('value', s => {
         const data = s.val();
         const tbody = document.getElementById('main-table');
         tbody.innerHTML = '';
-        
         if(!data) return;
-        let list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
-
-        list.forEach(p => {
+        let list = Object.keys(data).map(k => {
+            let p = data[k];
             p.total = 0;
             ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => p.total += points[(p[k]||'').toUpperCase()] || 0);
+            return p;
         });
-
         list.sort((a,b) => b.total - a.total).forEach((p, i) => {
-            const row = `<tr>
-                <td style="color:var(--gray)">${i+1}</td>
-                <td><strong>${p.name}</strong></td>
-                <td style="color:var(--accent); font-weight:bold">${p.total}</td>
+            tbody.innerHTML += `<tr>
+                <td>${i+1}</td><td><strong>${p.name}</strong></td><td style="color:var(--accent)">${p.total}</td>
                 ${['sword','uhc','axe','crystal','mace','nethpot','smp'].map(k => `<td>${fmt(p[k])}</td>`).join('')}
-                <td class="admin-only" style="display:${isOwner?'table-cell':'none'}">
-                    <button class="act-btn" onclick="edit('${p.id}')">EDIT</button>
-                    <button class="act-btn del" onclick="del('${p.id}')">DEL</button>
-                </td>
             </tr>`;
-            tbody.innerHTML += row;
         });
     });
-
     function fmt(v) {
         if(!v) return '<span class="t-badge na-b">N/A</span>';
         const val = v.toUpperCase().trim();
         return `<span class="t-badge ${val.includes('HT')?'ht-b':'lt-b'}">${val}</span>`;
     }
-
-    function pushData() {
-        if(!isOwner) return;
-        const id = document.getElementById('entry-id').value;
-        const payload = {
-            name: document.getElementById('in-name').value,
-            sword: document.getElementById('in-sword').value,
-            uhc: document.getElementById('in-uhc').value,
-            axe: document.getElementById('in-axe').value,
-            crystal: document.getElementById('in-crys').value,
-            mace: document.getElementById('in-mace').value,
-            nethpot: document.getElementById('in-neth').value,
-            smp: document.getElementById('in-smp').value
-        };
-        id ? db.ref('players/'+id).update(payload) : db.ref('players').push(payload);
-        document.querySelectorAll('#admin-panel input').forEach(i => i.value = '');
-    }
-
-    function edit(id) {
-        db.ref('players/'+id).once('value', s => {
-            const p = s.val();
-            document.getElementById('entry-id').value = id;
-            document.getElementById('in-name').value = p.name;
-            document.getElementById('in-sword').value = p.sword || '';
-            document.getElementById('in-uhc').value = p.uhc || '';
-            document.getElementById('in-axe').value = p.axe || '';
-            document.getElementById('in-crys').value = p.crystal || '';
-            document.getElementById('in-mace').value = p.mace || '';
-            document.getElementById('in-neth').value = p.nethpot || '';
-            document.getElementById('in-smp').value = p.smp || '';
-            window.scrollTo(0,0);
-        });
-    }
-
-    function del(id) { if(confirm("Usuń gracza?")) db.ref('players/'+id).remove(); }
 </script>
 </body>
 </html>
