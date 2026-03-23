@@ -11,11 +11,6 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
-        #admin-section { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--accent); margin-bottom: 30px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; outline: none; }
-        input:focus { border-color: var(--accent); }
-        .btn-save { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 12px; cursor: pointer; border-radius: 6px; width: 100%; text-transform: uppercase; }
         .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .filter-btn { background: #222; color: #fff; border: 1px solid #333; padding: 8px 18px; cursor: pointer; border-radius: 20px; transition: 0.3s; font-size: 12px; font-weight: bold; }
         .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
@@ -28,11 +23,6 @@
         .ht { color: var(--ht-color); border: 1px solid var(--ht-color); background: rgba(255,68,68,0.1); }
         .lt { color: var(--lt-color); border: 1px solid var(--lt-color); background: rgba(68,255,68,0.1); }
         .na { color: #444; border: 1px solid #222; }
-        .admin-login-link { text-align: center; margin-top: 50px; color: #222; cursor: pointer; font-size: 11px; transition: 0.3s; }
-        .admin-login-link:hover { color: var(--accent); }
-        .admin-only { display: none; }
-        .action-btn { background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin: 0 2px; }
-        .del-btn { background: #400; }
     </style>
 </head>
 <body>
@@ -41,23 +31,6 @@
     <div class="header">
         <h1>MCTIERS GLOBAL</h1>
         <p style="color: var(--gray)">Competitive PvP Leaderboard</p>
-    </div>
-
-    <div id="admin-section">
-        <h3 id="form-title" style="margin-top:0">Editor Panel</h3>
-        <input type="hidden" id="edit-key">
-        <div class="form-grid">
-            <input type="text" id="p-name" placeholder="Username">
-            <input type="text" id="p-sword" placeholder="Sword">
-            <input type="text" id="p-uhc" placeholder="UHC">
-            <input type="text" id="p-axe" placeholder="Axe">
-            <input type="text" id="p-crystal" placeholder="Crystal">
-            <input type="text" id="p-mace" placeholder="Mace">
-            <input type="text" id="p-nethpot" placeholder="Nethpot">
-            <input type="text" id="p-smp" placeholder="SMP">
-        </div>
-        <button class="btn-save" onclick="saveToCloud()">Push Update</button>
-        <button onclick="logout()" style="background:none; border:none; color:#555; cursor:pointer; margin-top:10px; font-size:11px;">Logout Session</button>
     </div>
 
     <div class="filter-bar">
@@ -85,14 +58,11 @@
                     <th>Mace</th>
                     <th>Nethpot</th>
                     <th>SMP</th>
-                    <th class="admin-only">Actions</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
     </div>
-
-    <div class="admin-login-link" onclick="handleAuth()">System Administration</div>
 </div>
 
 <script>
@@ -110,73 +80,33 @@
     const db = firebase.database();
 
     const tierPoints = { 'HT1': 10, 'LT1': 9, 'HT2': 8, 'LT2': 7, 'HT3': 6, 'LT3': 5, 'HT4': 4, 'LT4': 3, 'HT5': 2, 'LT5': 1 };
-    const ADMIN_PW = "Malpizon"; 
     let currentMode = 'all';
-    let isAdmin = false;
-
-    function handleAuth() {
-        const pass = prompt("Auth Required:");
-        if (pass === ADMIN_PW) {
-            isAdmin = true;
-            document.getElementById('admin-section').style.display = 'block';
-            refreshDisplay();
-        } else if (pass !== null) {
-            alert("Wrong password!");
-        }
-    }
-
-    function logout() {
-        isAdmin = false;
-        document.getElementById('admin-section').style.display = 'none';
-        refreshDisplay();
-    }
 
     db.ref('players').on('value', (s) => {
         window.dataCache = s.val();
-        refreshDisplay();
-    });
-
-    function refreshDisplay() {
         render(window.dataCache);
-    }
-
-    function saveToCloud() {
-        const key = document.getElementById('edit-key').value;
-        const name = document.getElementById('p-name').value;
-        if(!name) return;
-
-        const pData = {
-            name,
-            sword: document.getElementById('p-sword').value,
-            uhc: document.getElementById('p-uhc').value,
-            axe: document.getElementById('p-axe').value,
-            crystal: document.getElementById('p-crystal').value,
-            mace: document.getElementById('p-mace').value,
-            nethpot: document.getElementById('p-nethpot').value,
-            smp: document.getElementById('p-smp').value
-        };
-
-        key ? db.ref('players/' + key).update(pData) : db.ref('players').push(pData);
-        reset();
-    }
+    });
 
     function render(data) {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'table-cell' : 'none');
-
         if(!data) return;
         let list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
 
         list.forEach(p => {
             let sum = 0;
-            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => sum += tierPoints[(p[k]||'').toUpperCase()] || 0);
+            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => {
+                let val = (p[k] || '').toUpperCase().trim();
+                sum += tierPoints[val] || 0;
+            });
             p.total = sum;
         });
 
         list.sort((a, b) => {
             if (currentMode === 'all') return b.total - a.total;
-            return (tierPoints[(b[currentMode]||'').toUpperCase()] || 0) - (tierPoints[(a[currentMode]||'').toUpperCase()] || 0);
+            let valA = tierPoints[(a[currentMode] || '').toUpperCase().trim()] || 0;
+            let valB = tierPoints[(b[currentMode] || '').toUpperCase().trim()] || 0;
+            return valB - valA;
         });
 
         list.forEach((p, i) => {
@@ -186,10 +116,6 @@
                     <td><strong>${p.name}</strong></td>
                     <td style="color:var(--accent); font-weight:bold">${p.total}</td>
                     ${['sword','uhc','axe','crystal','mace','nethpot','smp'].map(k => `<td>${fmt(p[k])}</td>`).join('')}
-                    <td class="admin-only" style="display:${isAdmin ? 'table-cell' : 'none'}">
-                        <button class="action-btn" onclick="editP('${p.id}')">✎</button>
-                        <button class="action-btn del-btn" onclick="delP('${p.id}')">×</button>
-                    </td>
                 </tr>`;
         });
     }
@@ -200,20 +126,13 @@
         return `<span class="tier ${val.includes('HT')?'ht':'lt'}">${val}</span>`;
     }
 
-    function editP(id) {
-        const p = window.dataCache[id];
-        document.getElementById('edit-key').value = id;
-        document.getElementById('p-name').value = p.name;
-        ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => document.getElementById('p-'+k).value = p[k] || '');
-        window.scrollTo(0,0);
-    }
-
-    function delP(id) { if(confirm("Confirm?")) db.ref('players/' + id).remove(); }
     function setMode(m) { 
         currentMode = m; 
-        refreshDisplay(); 
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.toLowerCase() === m || (m === 'all' && btn.innerText === 'OVERALL'));
+        });
+        render(window.dataCache); 
     }
-    function reset() { document.getElementById('edit-key').value = ""; document.querySelectorAll('#admin-section input').forEach(i => i.value = ''); }
 </script>
 </body>
 </html>
