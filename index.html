@@ -110,23 +110,17 @@
     const db = firebase.database();
 
     const tierPoints = { 'HT1': 10, 'LT1': 9, 'HT2': 8, 'LT2': 7, 'HT3': 6, 'LT3': 5, 'HT4': 4, 'LT4': 3, 'HT5': 2, 'LT5': 1 };
-    const HASHED_PW = "7e62a988ca130f146497f26d25227187140f00f073289066665790408468b446"; 
+    const ADMIN_PW = "Malpizon"; 
     let currentMode = 'all';
     let isAdmin = false;
 
-    async function handleAuth() {
+    function handleAuth() {
         const pass = prompt("Auth Required:");
-        if (!pass) return;
-        const msgUint8 = new TextEncoder().encode(pass);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        if(hashHex === HASHED_PW) {
+        if (pass === ADMIN_PW) {
             isAdmin = true;
             document.getElementById('admin-section').style.display = 'block';
             refreshDisplay();
-        } else {
+        } else if (pass !== null) {
             alert("Wrong password!");
         }
     }
