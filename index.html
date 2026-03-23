@@ -11,6 +11,10 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+        #admin-section { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--accent); margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; outline: none; width: 90%; }
+        .btn-save { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 12px; cursor: pointer; border-radius: 6px; width: 100%; text-transform: uppercase; }
         .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .filter-btn { background: #222; color: #fff; border: 1px solid #333; padding: 8px 18px; cursor: pointer; border-radius: 20px; transition: 0.3s; font-size: 12px; font-weight: bold; }
         .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
@@ -23,6 +27,8 @@
         .ht { color: var(--ht-color); border: 1px solid var(--ht-color); background: rgba(255,68,68,0.1); }
         .lt { color: var(--lt-color); border: 1px solid var(--lt-color); background: rgba(68,255,68,0.1); }
         .na { color: #444; border: 1px solid #222; }
+        .admin-only { display: none; }
+        .action-btn { background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin: 0 2px; }
     </style>
 </head>
 <body>
@@ -33,31 +39,34 @@
         <p style="color: var(--gray)">Competitive PvP Leaderboard</p>
     </div>
 
+    <div id="admin-section">
+        <h3 id="form-title" style="margin:0 0 15px 0">Admin Panel Active</h3>
+        <input type="hidden" id="edit-key">
+        <div class="form-grid">
+            <input type="text" id="p-name" placeholder="Nick">
+            <input type="text" id="p-sword" placeholder="Sword">
+            <input type="text" id="p-uhc" placeholder="UHC">
+            <input type="text" id="p-axe" placeholder="Axe">
+            <input type="text" id="p-crystal" placeholder="Crystal">
+            <input type="text" id="p-mace" placeholder="Mace">
+            <input type="text" id="p-nethpot" placeholder="Nethpot">
+            <input type="text" id="p-smp" placeholder="SMP">
+        </div>
+        <button class="btn-save" onclick="saveToCloud()">Save Changes</button>
+    </div>
+
     <div class="filter-bar">
         <button class="filter-btn active" onclick="setMode('all')">OVERALL</button>
         <button class="filter-btn" onclick="setMode('sword')">SWORD</button>
-        <button class="filter-btn" onclick="setMode('uhc')">UHC</button>
-        <button class="filter-btn" onclick="setMode('axe')">AXE</button>
         <button class="filter-btn" onclick="setMode('crystal')">CRYSTAL</button>
         <button class="filter-btn" onclick="setMode('mace')">MACE</button>
-        <button class="filter-btn" onclick="setMode('nethpot')">NETHPOT</button>
-        <button class="filter-btn" onclick="setMode('smp')">SMP</button>
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>Points</th>
-                    <th>Sword</th>
-                    <th>UHC</th>
-                    <th>Axe</th>
-                    <th>Crystal</th>
-                    <th>Mace</th>
-                    <th>Nethpot</th>
-                    <th>SMP</th>
+                    <th>#</th><th>Player</th><th>Points</th><th>Sword</th><th>UHC</th><th>Axe</th><th>Crystal</th><th>Mace</th><th>Nethpot</th><th>SMP</th><th class="admin-only">Actions</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
@@ -81,58 +90,93 @@
 
     const tierPoints = { 'HT1': 10, 'LT1': 9, 'HT2': 8, 'LT2': 7, 'HT3': 6, 'LT3': 5, 'HT4': 4, 'LT4': 3, 'HT5': 2, 'LT5': 1 };
     let currentMode = 'all';
+    
+    // TWOJA TAJNA FRAZA DO LINKU:
+    const SECRET_KEY = "MalpizonAdmin"; 
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === SECRET_KEY;
+
+    if(isAdmin) {
+        document.getElementById('admin-section').style.display = 'block';
+    }
 
     db.ref('players').on('value', (s) => {
         window.dataCache = s.val();
-        render(window.dataCache);
+        render();
     });
 
-    function render(data) {
+    function saveToCloud() {
+        if(!isAdmin) return;
+        const key = document.getElementById('edit-key').value;
+        const name = document.getElementById('p-name').value;
+        if(!name) return alert("Nick?");
+
+        const pData = {
+            name,
+            sword: document.getElementById('p-sword').value,
+            uhc: document.getElementById('p-uhc').value,
+            axe: document.getElementById('p-axe').value,
+            crystal: document.getElementById('p-crystal').value,
+            mace: document.getElementById('p-mace').value,
+            nethpot: document.getElementById('p-nethpot').value,
+            smp: document.getElementById('p-smp').value
+        };
+
+        key ? db.ref('players/' + key).update(pData) : db.ref('players').push(pData);
+        document.querySelectorAll('#admin-section input').forEach(i => i.value = '');
+        document.getElementById('edit-key').value = '';
+    }
+
+    function render() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
-        if(!data) return;
-        let list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'table-cell' : 'none');
+
+        if(!window.dataCache) return;
+        let list = Object.keys(window.dataCache).map(k => ({ id: k, ...window.dataCache[k] }));
 
         list.forEach(p => {
             let sum = 0;
-            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => {
-                let val = (p[k] || '').toUpperCase().trim();
-                sum += tierPoints[val] || 0;
-            });
+            ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => sum += tierPoints[(p[k]||'').toUpperCase()] || 0);
             p.total = sum;
         });
 
         list.sort((a, b) => {
             if (currentMode === 'all') return b.total - a.total;
-            let valA = tierPoints[(a[currentMode] || '').toUpperCase().trim()] || 0;
-            let valB = tierPoints[(b[currentMode] || '').toUpperCase().trim()] || 0;
-            return valB - valA;
+            return (tierPoints[(b[currentMode]||'').toUpperCase()] || 0) - (tierPoints[(a[currentMode]||'').toUpperCase()] || 0);
         });
 
         list.forEach((p, i) => {
             tbody.innerHTML += `
                 <tr>
-                    <td style="color:var(--gray)">${i+1}</td>
+                    <td>${i+1}</td>
                     <td><strong>${p.name}</strong></td>
-                    <td style="color:var(--accent); font-weight:bold">${p.total}</td>
+                    <td style="color:var(--accent)">${p.total}</td>
                     ${['sword','uhc','axe','crystal','mace','nethpot','smp'].map(k => `<td>${fmt(p[k])}</td>`).join('')}
+                    <td class="admin-only" style="display:${isAdmin ? 'table-cell' : 'none'}">
+                        <button class="action-btn" onclick="editP('${p.id}')">✎</button>
+                        <button class="action-btn" onclick="delP('${p.id}')">×</button>
+                    </td>
                 </tr>`;
         });
     }
 
     function fmt(v) {
-        if (!v || v.trim() === "") return '<span class="tier na">N/A</span>';
+        if (!v) return '<span class="tier na">N/A</span>';
         let val = v.toUpperCase().trim();
         return `<span class="tier ${val.includes('HT')?'ht':'lt'}">${val}</span>`;
     }
 
-    function setMode(m) { 
-        currentMode = m; 
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.innerText.toLowerCase() === m || (m === 'all' && btn.innerText === 'OVERALL'));
-        });
-        render(window.dataCache); 
+    function editP(id) {
+        const p = window.dataCache[id];
+        document.getElementById('edit-key').value = id;
+        document.getElementById('p-name').value = p.name;
+        ['sword','uhc','axe','crystal','mace','nethpot','smp'].forEach(k => document.getElementById('p-'+k).value = p[k] || '');
+        window.scrollTo(0,0);
     }
+
+    function delP(id) { if(confirm("Del?")) db.ref('players/' + id).remove(); }
+    function setMode(m) { currentMode = m; render(); }
 </script>
 </body>
 </html>
